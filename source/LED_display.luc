@@ -30,7 +30,7 @@ module led_display (
     
     case(state){
       0:                                   //scrolling effect
-        if (delay_counter.q == 1000000){
+        if (delay_counter.q == 2000000){
           
           case(scroll_counter.q)
           {
