@@ -1,0 +1,13 @@
+module fulladder_result (
+    input lut_result[2],    // corresponding result from the lut
+    input dev_result[2],    // input of the result from the device 
+    output result_bin[1]    // binary output for the result_bin
+) {
+
+  always {
+    if (lut_result == dev_result)
+      result_bin=1b1;      // return true 
+    else
+      result_bin=1b0;      // return false
+  }
+}

@@ -1,0 +1,131 @@
+module led_display (
+    input clk,
+    input rst,
+    input state[2],        // state for the led display, auto mode and manual mode, show mode and input mode 
+    input manual_result[1], //the result of manual test mode, 0 for failed and 1 for passed
+    input dev_input[3],    // take in the input from the device
+    input lut_output[3],   // take in lut output and give out led output
+    input dev_output[3],   // take in device output
+
+    input pass_input[4],        //input from the adder_checker for the automatic checking successes
+    input fail_input[4],        //input from the adder_checker for the automatic checking failures
+    output led[3][8],           //output for the individual leds for stat viewing
+    output seven_segout[4][8]  //output for the seven segment display
+      ) {
+  
+  .clk(clk) {
+    .rst(rst) {
+        dff delay_counter[23];   //divide each second into 4, meaning counter resets every 12,500,000 ticks 
+        fsm scroll_counter = {ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, ELEVEN};
+    }
+  }
+
+  always {
+  // take the state variable as the state of the LED display, including the idle state as well the manual and auto state
+  // the idle state is the default state when the device recovers from reset, and denoted by scrolling on the seven segment
+  // the auto state shows the device output, lut output and the device input from the individual LED_display
+  // the manual state shows the device output, lut output and the device input, as well as the corresponding result
+    
+
+    
+    case(state){
+      0:                                   //scrolling effect
+        if (delay_counter.q == 1000000){
+          
+          case(scroll_counter.q)
+          {
+            scroll_counter.ZERO:
+              seven_segout = {8d21, 8d10, 8d10, 8d10};
+              scroll_counter.d = scroll_counter.ONE;
+              led = {8h00, 8h00, 8hc0};
+              
+            scroll_counter.ONE:
+              seven_segout = {8d10, 8d21, 8d10, 8d10};
+              scroll_counter.d = scroll_counter.TWO;
+              led = {8h00, 8h00, 8h30};
+              
+            scroll_counter.TWO:
+              seven_segout = {8d10, 8d10, 8d21, 8d10};
+              scroll_counter.d = scroll_counter.THREE;
+              led = {8h00, 8h00, 8h0c};
+          
+            scroll_counter.THREE:
+              seven_segout = {8d10, 8d10, 8d10, 8d21};
+              scroll_counter.d = scroll_counter.FOUR;
+              led = {8h00, 8h00, 8h03};
+              
+            scroll_counter.FOUR:
+              seven_segout = {8d10, 8d10, 8d10, 8d22};
+              scroll_counter.d = scroll_counter.FIVE;
+              led = {8hc0, 8h00, 8h00};
+              
+            scroll_counter.FIVE:
+              seven_segout = {8d10, 8d10, 8d10, 8d23};
+              scroll_counter.d = scroll_counter.SIX;
+              led = {8h30, 8h00, 8h00};
+              
+            scroll_counter.SIX:
+              seven_segout = {8d10, 8d10, 8d10, 8d24};
+              scroll_counter.d = scroll_counter.SEVEN;
+              led = {8h0c, 8h00, 8h00};
+              
+            scroll_counter.SEVEN:
+              seven_segout = {8d10, 8d10, 8d24, 8d10};
+              scroll_counter.d = scroll_counter.EIGHT;
+              led = {8h03, 8h00, 8h00};
+              
+            scroll_counter.EIGHT:
+              seven_segout = {8d10, 8d24, 8d10, 8d10};
+              scroll_counter.d = scroll_counter.NINE;
+              led = {8h00, 8hc0, 8h00};
+              
+            scroll_counter.NINE:
+              seven_segout = {8d24, 8d10, 8d10, 8d10};
+              scroll_counter.d = scroll_counter.TEN;
+              led = {8h00, 8h30, 8h00};
+              
+            scroll_counter.TEN:
+              seven_segout = {8d25, 8d10, 8d10, 8d10};
+              scroll_counter.d = scroll_counter.ELEVEN;
+              led = {8h00, 8h0c, 8h00};
+              
+            scroll_counter.ELEVEN:
+              seven_segout = {8d26, 8d10, 8d10, 8d10};
+              scroll_counter.d = scroll_counter.ZERO;
+              led = {8h00, 8h03, 8h00};
+            
+            default:
+              led = 3x{{8d00}};
+              seven_segout = 4x{{8d10}};
+          }
+         delay_counter.d = 0;
+        }else{
+        delay_counter.d = delay_counter.q + 1;
+        }
+      1:
+        if (manual_result == 1)
+          seven_segout = {8d18, 8d11, 8d19, 8d19}; //PASS
+        else
+          seven_segout = {8d14, 8d11, 8d16, 8d17}; //FAIL
+          
+        led = {8h00,8h00,8h00};                // all leds blank
+        led[2][2:0] = dev_output;
+        led[1][2:0] = lut_output;
+        led[0][2:0] = dev_input;
+      
+      2:
+        seven_segout[3:1] = {8d18,8d20,8d10};  // shows "P- "
+        seven_segout[0] = pass_input;          // show number of tests passed
+        led = {8h00,8h00,8h00};                // all leds blank
+        
+      3:
+        seven_segout[3:1] = {8d14,8d20,8d10};  // shows "F- "
+        seven_segout[0] = fail_input;          // show number of tests failed
+        led = {8h00,8h00,8h00};                // all leds blank
+        
+      default:
+        led = 3x{{8d00}};
+        seven_segout = 4x{{8d10}};
+      }
+  }
+}

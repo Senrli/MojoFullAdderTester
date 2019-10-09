@@ -1,0 +1,6 @@
+NET "device_input<0>" LOC = P51 | IOSTANDARD = LVTTL | PULLDOWN;
+NET "device_input<1>" LOC = P41 | IOSTANDARD = LVTTL | PULLDOWN;
+NET "device_input<2>" LOC = P35 | IOSTANDARD = LVTTL | PULLDOWN;
+
+NET "device_output<0>" LOC = P33 | IOSTANDARD = LVTTL; 
+NET "device_output<1>" LOC = P30 | IOSTANDARD = LVTTL; 

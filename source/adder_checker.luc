@@ -1,0 +1,127 @@
+module adder_checker (
+    input clk,  // clock
+    input rst,  // reset
+    input rst2, // reset for timer
+    input dipswin[3],             //dip switches for input
+    input state[2],               // result for each of the auto test case
+    output led_disp_state[2],     //output states for the led_display module
+    output check[3],              //tester output to the device
+    output fails[4],              //output number of fails from auto test
+    output passes[4],             //output number of passes from auto test
+    input manual,                 //manual button
+    input auto                    //auto button
+  ) 
+{
+  
+  .clk(clk) 
+  {
+    
+    .rst(rst) 
+    {
+      fsm state_main = {IDLE, MANUAL, AUTO};        //reset the device into IDLE state when reset button is pressed
+    }
+    .rst(rst2)                                      //reset the fsm when entering the zero state
+    {
+      dff delay_counter[26];         //2^26 = 67,108,864, need to be capped at 50,000,000 for one second
+      dff pass_counter[4];           //counter to record down no of passed cases 
+      dff fail_counter[4];           //counter to record down no of failed cases
+      fsm state_auto = {ZERO,ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,PASS,FAIL};
+      
+    }
+  }
+            
+  always 
+  {
+
+    
+  fails = fail_counter.q;                    //assign outputs
+  passes = pass_counter.q;                   //assign outputs
+        
+  case (state_main.q) {  
+      state_main.IDLE:
+          check = 3b000;
+          led_disp_state = 2d0;              //idle state
+          if (manual)
+            state_main.d = state_main.MANUAL;
+          if (auto)
+            state_main.d = state_main.AUTO;
+       
+      state_main.MANUAL:
+        check = dipswin;
+        led_disp_state = 2d1;               //enabled state
+        if (manual)
+          state_main.d = state_main.IDLE;
+          
+      state_main.AUTO:
+        if (delay_counter.q == 49999999) {
+          delay_counter.d = 0;
+          if (state == 1)
+            pass_counter.d = pass_counter.q + 1;
+          else
+            fail_counter.d = fail_counter.q + 1; 
+          case(state_auto.q){
+            state_auto.ZERO:
+              led_disp_state = 2d1;               //enabled state
+              check = 3b000;
+              state_auto.d = state_auto.ONE;
+              
+            state_auto.ONE:
+              led_disp_state = 2d1;               //enabled state
+              check = 3b001;
+              state_auto.d = state_auto.TWO;
+              
+            state_auto.TWO:  
+              led_disp_state = 2d1;               //enabled state
+              check = 3b010;
+              state_auto.d = state_auto.THREE;
+              
+            state_auto.THREE:
+              led_disp_state = 2d1;               //enabled state
+              check = 3b011;
+              state_auto.d = state_auto.FOUR;
+              
+            state_auto.FOUR:
+              led_disp_state = 2d1;               //enabled state
+              check = 3b100;
+              state_auto.d = state_auto.FIVE;
+              
+            state_auto.FIVE:
+              led_disp_state = 2d1;               //enabled state
+              check = 3b101;
+              state_auto.d = state_auto.SIX;
+              
+            state_auto.SIX:
+              led_disp_state = 2d1;               //enabled state
+              check = 3b110;
+              state_auto.d = state_auto.SEVEN;
+            
+            state_auto.SEVEN:
+              led_disp_state = 2d1;               //enabled state
+              check = 3b111;
+              state_auto.d = state_auto.PASS;
+            
+            state_auto.PASS:
+              led_disp_state = 2d2;               //enabled state
+              check = 3b000;
+              state_auto.d = state_auto.FAIL;
+              
+            state_auto.FAIL:
+              led_disp_state = 2d3;               //enabled state
+              check = 3b000;
+              state_main.d = state_main.IDLE; 
+             
+            default:
+              led_disp_state = 2d0;
+              check = 3b00;
+          }
+        }else{
+        delay_counter.d = delay_counter.q+1;
+        }
+        
+        default:
+          check = 3b00;                              //idle state value
+          led_disp_state = 2b00;                     //idle state value
+        
+       } 
+    } 
+  }

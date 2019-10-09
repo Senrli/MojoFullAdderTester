@@ -1,0 +1,24 @@
+module pwm_gen (
+    input clk,      // clock
+    input rst,      // reset
+    input sigin[12],   //input signal magnitude
+    output out    
+  ) {
+  
+.clk(clk) {
+  .rst(rst) {
+    dff pwm_counter[12]; //pwm counter of size 4096 bit
+    }
+  }
+  
+
+  always {
+    if (pwm_counter.q < sigin){
+      out = 1;
+      }
+    else{
+      out = 0;
+      }
+    pwm_counter.d = pwm_counter.q + 1;
+  }
+}

@@ -1,0 +1,48 @@
+module breathing_led (
+    input clk,  // clock
+    input rst,  // reset
+    output led_out[8] //led output breathing
+  ) {
+  
+  .clk(clk) {
+    .rst(rst) {
+      dff delay_counter[12]; //pwm counter of size 8 bit, 4096
+      dff led_counter[4];    //scroll led state counter, 0-12 
+      dff led_index[3];      //indexing for the individual leds, 0-8
+      //pwm_gen led_ctrl;
+    }
+  }
+  
+  const LUT= {12h333, 12hb33, 12hfff, 12hb33, 12h333};        
+  
+  const LED_LUT={12h0, 12h0, 12h0, 12h0,
+                         12h0, 12h0, 12h0, 12h0,
+                         12h333, 12hb33, 12hfff, 12hb33,
+                         12h333, 12h0, 12h0, 12h0,
+                         12h0, 12h0, 12h0, 12h0,
+                         12h0};
+
+  var i;
+  always {
+  led_out = 8hff;
+  /*
+    //for (i = 8; i > 0; i--){        
+    //  led_out[i-1] = led_ctrl.out << led_counter.d;
+    //  led_ctrl.sigin = LED_LUT[i-1+led_counter.q];
+      
+    //  }    
+       
+    led_out[led_index] = led_index
+    
+    
+    
+    if (delay_counter.q == 0){
+      if (led_index.q >= 8){
+        
+        }
+      led_index.d = led_index.q + 1;
+      }
+    delay_counter.d = delay_counter.q + 1;
+    */
+  }
+}

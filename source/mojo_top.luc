@@ -1,0 +1,96 @@
+module mojo_top (
+    input clk,              // 50MHz clock
+    input rst_n,            // reset button (active low)
+    output led [8],         // 8 user controllable LEDs
+    input cclk,             // configuration clock, AVR ready when high
+    output spi_miso,        // AVR SPI MISO
+    input spi_ss,           // AVR SPI Slave Select
+    input spi_mosi,         // AVR SPI MOSI
+    input spi_sck,          // AVR SPI Clock
+    output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
+    input avr_tx,           // AVR TX (FPGA RX)
+    output avr_rx,          // AVR RX (FPGA TX)
+    input avr_rx_busy,      // AVR RX buffer full
+    output io_led [3][8],   // LEDs on IO Shield
+    output io_seg [8],      // 7-segment LEDs on IO Shield //used for each segment
+    output io_sel [4],      // Digit select on IO Shield  //used for each digit of 7-segment
+    input io_button [5],    // 5 buttons on IO Shield
+    input io_dip [3][8],     // DIP switches on IO Shield
+    
+    output device_input[3],     //device input three pins
+    input device_output[2]      //device output two pins
+  ) {
+  
+  sig rst;                  // reset signal
+  
+  .clk(clk) {
+    // The reset conditioner is used to synchronize the reset signal to the FPGA
+    // clock. This ensures the entire FPGA comes out of reset at the same time.
+    reset_conditioner reset_cond;
+    button_conditioner auto_button;
+    button_conditioner manual_button;
+    pipeline dip_cond[3] (#DEPTH(2));  //create a pipeline for the DIP input 
+    
+    edge_detector auto_edge(#RISE(1), #FALL(0));
+    edge_detector manual_edge(#RISE(1), #FALL(0));
+    
+    .rst(rst) {
+      multi_seven_seg seg;
+      adder_checker checker;
+      led_display led_ctrl;
+      breathing_led led_ob;
+    }
+  }
+  
+  fulladder_result result;
+  fulladder_lut lut;
+  
+
+  
+  always {
+    reset_cond.in = ~rst_n;   // input raw inverted reset signal
+    rst = reset_cond.out;     // conditioned reset
+    
+    manual_button.in = io_button[4];
+    auto_button.in = io_button[3];
+    
+    manual_edge.in = manual_button.out;
+    auto_edge.in = auto_button.out;
+    
+    spi_miso = bz;            // not using SPI
+    spi_channel = bzzzz;      // not using flags
+    avr_rx = bz;              // not using serial port
+    
+    io_seg = ~seg.seg; // connect segments to the driver       //segment of the 7-seg display
+    io_sel = ~seg.sel; // connect digit select to the driver   //digit of 7-seg display    
+
+    device_input = checker.check;
+    seg.values = led_ctrl.seven_segout;    
+    io_led = led_ctrl.led;
+    
+    led = led_ob.led_out;
+
+    led_ctrl.pass_input = checker.passes;
+    led_ctrl.fail_input = checker.fails;
+    led_ctrl.state = checker.led_disp_state;
+    led_ctrl.dev_input = checker.check;
+    led_ctrl.dev_output = device_output;
+    led_ctrl.manual_result = result.result_bin;      
+    led_ctrl.lut_output = lut.out;
+    
+    dip_cond.in = io_dip[0][2:0];                    //connect the first three digits of the dip input to the pipeline
+    
+    checker.dipswin = dip_cond.out;
+    checker.state = result.result_bin;
+    checker.auto = auto_edge.out;
+    checker.manual = manual_edge.out;
+    checker.rst2 = auto_edge.out;
+    
+    result.lut_result = lut.out;
+    result.dev_result = device_output;
+    
+    lut.in = checker.check;
+    
+
+  }    
+}
