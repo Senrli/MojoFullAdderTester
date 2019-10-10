@@ -9,3 +9,6 @@ Mojo HDL for SUTD 2019 50.002 Mini Hardware Project
 
 
 Removed generated Verilog files for easy management
+
+Please use Alchitry Labs instead of Mojo IDE for compilation of HDL files.
+
